@@ -1,0 +1,11 @@
+# Dependencies
+node_modules/
+
+# Local env / tooling
+.vercel/
+.env
+.env.*
+
+# OS cruft
+.DS_Store
+Thumbs.db
