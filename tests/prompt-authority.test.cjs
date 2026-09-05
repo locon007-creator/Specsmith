@@ -42,6 +42,38 @@ const timesheetPlan = {
   persistence: 'Active shift and saved records in localStorage'
 };
 
+const financePlan = {
+  name: 'Budget Flow',
+  idea: 'Build a personal budgeting app for one person.',
+  purpose: 'set a budget and keep every budget in one calm private place',
+  user: 'one person who wants control without a spreadsheet',
+  workflow: 'Set a budget → Budgets → Budget',
+  screens: [
+    ['Budgets', 'saved budgets with current progress and one clear add action'],
+    ['Budget', 'planned amount, spent amount, remaining amount, and transactions'],
+    ['Settings', 'currency, theme, and local data controls']
+  ],
+  features: ['Create, edit, and delete budgets', 'Track spending against each budget'],
+  logic: ['Remaining amount equals planned amount minus recorded spending'],
+  persistence: 'Budgets and transactions in localStorage'
+};
+
+const genericPlan = {
+  name: 'Pocket List',
+  idea: 'Build a simple personal collection app.',
+  purpose: 'keep a small personal collection organized',
+  user: 'one person',
+  workflow: 'Open → view items → add or edit an item → return to the collection',
+  screens: [
+    ['Home', 'collection items and one clear add action'],
+    ['Detail', 'one saved item with edit and delete'],
+    ['Settings', 'theme and local data controls']
+  ],
+  features: ['Create, view, edit, and delete collection items'],
+  logic: ['Use stable unique IDs for saved items'],
+  persistence: 'Collection items in localStorage'
+};
+
 test('sections render in canonical authority order', () => {
   const text = authority.renderCanonicalPrompt(timesheetPlan, { role: authority.resolveRole(timesheetPlan.idea) });
   const headings = ['Role:', 'Product Mission / Objective:', 'Idea Lock:', 'Design & UX Standard:', 'Target User:', 'Primary Workflow:', 'Screen Architecture:', 'Screen-by-Screen Composition:', 'Product Behavior & Calculations:', 'Interaction & State Rules:', 'Scope Lock / Forbidden Behavior:', 'Implementation / Tool Guidance:', 'Verification + Done When:'];
@@ -63,4 +95,26 @@ test('premium first-screen gate is automatic', () => {
   assert.match(text, /first main screen.*finished premium product/i);
   assert.match(text, /purposeful micro-interactions/i);
   assert.match(text, /generic prototype|stack of cards/i);
+});
+
+test('timesheet output preserves timesheet behavior', () => {
+  const text = authority.renderCanonicalPrompt(timesheetPlan, { role: authority.resolveRole(timesheetPlan.idea) });
+  assert.match(text, /Punch In and Punch Out/i);
+  assert.match(text, /live elapsed timer/i);
+  assert.match(text, /gross.*deductions.*net pay/i);
+});
+
+test('finance output does not import timesheet or trucking behavior', () => {
+  const text = authority.renderCanonicalPrompt(financePlan, { role: authority.resolveRole(financePlan.idea) });
+  assert.match(text, /planned amount.*spent amount.*remaining amount/i);
+  assert.doesNotMatch(text, /Punch In|clock out|trailer|drop & hook/i);
+});
+
+test('generic output stays generic and keeps settings secondary', () => {
+  const role = authority.resolveRole(genericPlan.idea);
+  const text = authority.renderCanonicalPrompt(genericPlan, { role });
+  assert.equal(role.buildTarget, 'web');
+  assert.match(text, /Settings\/configuration: secondary/i);
+  assert.match(text, /collection items/i);
+  assert.doesNotMatch(text, /gross pay|trailer|streak|hourly rate/i);
 });
