@@ -14,17 +14,11 @@ const LS_THEME = "specsmith.theme.v1";
 /* ── Shared prompt blocks ───────────────────────────────── */
 
 const INTERACTION = [
-  "Every tap responds instantly with 150–250 ms transitions — no dead clicks or jarring jumps.",
-  "Buttons scale on press; screens slide or fade in; success states spring briefly.",
-  "Confetti or a subtle celebration on meaningful milestones.",
-  "Empty, loading, and error states are designed, never blank.",
+  "Every visible control responds immediately and performs its stated action.",
+  "Use purposeful restrained transitions for navigation and state changes; avoid decorative motion that slows the task.",
+  "Preserve user-entered and active state through normal navigation where the product requires it.",
+  "Design empty, loading, completed, saved, edited, disabled, and error states only where relevant.",
 ];
-
-const VISUAL =
-  "Premium Apple-level polish. System font stack, generous whitespace on an 8px grid, one accent color " +
-  "with a soft tint, hairline borders, frosted-glass surfaces, 14–20px rounded cards, soft shadows, and a " +
-  "light + dark theme. Content sits in a single centered column, max-width 430px and min-width 360px, " +
-  "portrait. No fake phone frame — the app itself is the frame.";
 
 const BUILD =
   "Deliver one self-contained index.html with inline HTML, CSS, and JavaScript. No build step, no " +
@@ -883,7 +877,7 @@ function compilePlan(idea, profile) {
   plan.name = detectName(idea) || profile.name || deriveName(idea);
   plan.purpose = profile.purpose;
   plan.user = detectAudience(idea) || profile.user;
-  plan.workflow = profile.workflow;
+  plan.workflow = SpecsmithPromptAuthority.extractExplicitWorkflow(idea) || profile.workflow;
   plan.screens = profile.screens.map((s) => [s[0], s[1]]);
   plan.features = profile.features.slice();
   plan.logic = profile.logic.slice();
@@ -935,35 +929,12 @@ function contaminationReport(plan, idea, previous) {
 /* ── Prompt assembly ────────────────────────────────────── */
 
 function renderPlan(plan) {
-  const L = [];
-  L.push("Build “" + plan.name + "” — a premium, mobile-first web app.");
-  L.push("");
-  L.push("Idea: " + plan.idea);
-  L.push("");
-  L.push("**Purpose:** " + cap(plan.purpose) + ".");
-  L.push("");
-  L.push("**Target user:** " + cap(plan.user) + ".");
-  L.push("");
-  L.push("**Core workflow:** " + cap(plan.workflow) + ".");
-  L.push("");
-  L.push("**Screens** (state-driven navigation in one HTML file):");
-  plan.screens.forEach((s, i) => L.push((i + 1) + ". " + s[0] + " — " + s[1]));
-  L.push("");
-  L.push("**Core features:**");
-  plan.features.forEach((f) => L.push("- " + f));
-  L.push("");
-  L.push("**Key logic:**");
-  plan.logic.forEach((x) => L.push("- " + x));
-  L.push("");
-  L.push("**Persistence:** " + plan.persistence + ".");
-  L.push("");
-  L.push("**Interaction behavior:**");
-  INTERACTION.forEach((x) => L.push("- " + x));
-  L.push("");
-  L.push("**Visual direction:** " + VISUAL);
-  L.push("");
-  L.push("**Build:** " + BUILD);
-  return L.join("\n");
+  const role = SpecsmithPromptAuthority.resolveRole(plan.idea, plan);
+  return SpecsmithPromptAuthority.renderCanonicalPrompt(plan, {
+    role,
+    interactionRules: INTERACTION,
+    defaultBuildGuidance: BUILD,
+  });
 }
 
 // Entry point. `previous` (the last compiled plan, if any) is used *only* by
