@@ -827,6 +827,7 @@ const el = {
   genLabel: $("#genLabel"),
   output: $("#output"),
   emptyHero: $("#emptyHero"),
+  outputPanel: $("#outputPanel"),
   outputActions: $("#outputActions"),
   outputName: $("#outputName"),
   outputBadge: $("#outputBadge"),
@@ -836,6 +837,7 @@ const el = {
   historyCount: $("#historyCount"),
   copyBtn: $("#copyBtn"),
   downloadBtn: $("#downloadBtn"),
+  clearBtn: $("#clearBtn"),
   toast: $("#toast"),
 };
 
@@ -891,6 +893,7 @@ function slug(name) {
 /* ── Rendering ──────────────────────────────────────────── */
 
 function renderChips() {
+  if (!el.chips) return;
   el.chips.innerHTML = "";
   EXAMPLES.forEach((ex) => {
     const b = document.createElement("button");
@@ -907,7 +910,8 @@ function renderChips() {
 
 function renderOutput() {
   if (!current) {
-    el.emptyHero.hidden = false;
+    if (el.outputPanel) el.outputPanel.hidden = true;
+    if (el.emptyHero) el.emptyHero.hidden = true;
     el.output.hidden = true;
     el.outputActions.hidden = true;
     el.outputBadge.hidden = true;
@@ -917,7 +921,8 @@ function renderOutput() {
     return;
   }
 
-  el.emptyHero.hidden = true;
+  if (el.outputPanel) el.outputPanel.hidden = false;
+  if (el.emptyHero) el.emptyHero.hidden = true;
   el.output.hidden = false;
   el.outputActions.hidden = false;
   el.outputBadge.hidden = false;
@@ -1036,6 +1041,13 @@ function loadHistoryItem(h) {
   toast("Loaded “" + (h.name || "Untitled") + "”");
 }
 
+function clearPrompt() {
+  current = null;
+  persistLast();
+  renderOutput();
+  toast("Prompt cleared");
+}
+
 /* ── Copy / download ────────────────────────────────────── */
 
 async function copyText(text, msg) {
@@ -1098,6 +1110,50 @@ function initTheme() {
   applyTheme(saved || (prefersDark ? "dark" : "light"));
 }
 
+const PROMPT_IDEAS = [
+  ["Pocket garden", "A gentle plant-care companion with watering reminders and a simple sunlight log."],
+  ["Weekend planner", "Plan a weekend with a shared list of places, times, and must-do moments."],
+  ["Tiny pantry", "Track what is in the pantry and get a quick view of what needs using soon."],
+  ["Decision deck", "Turn a difficult choice into a calm, weighted comparison with notes."],
+  ["Reading nook", "Save books to read, track pages, and keep a short reflection after each session."],
+  ["Home reset", "A room-by-room checklist for small cleaning sessions that feel achievable."]
+];
+const EVERYDAY = {
+  "Productivity": ["A focused daily task list with three priorities and a done archive.", "A meeting notes app with decisions, owners, and follow-ups.", "A simple project board for a personal goal.", "A weekly planner that turns intentions into small next steps.", "A distraction log that shows where focus time goes."],
+  "Money & Finance": ["A monthly spending snapshot with categories and a gentle budget bar.", "A roommate expense splitter with settle-up balances.", "A savings goal tracker with milestones and encouraging check-ins.", "A bill calendar with due dates and paid status.", "A receipt log with amount, store, category, and notes."],
+  "Shopping": ["A grocery list grouped by aisle with one-tap check-off.", "A price comparison note for a planned purchase.", "A reusable packing list for different kinds of shopping trips.", "A gift ideas list with recipient, budget, and occasion.", "A pantry restock list that remembers frequently bought items."],
+  "Health & Wellness": ["A water tracker with a daily goal and quick-add buttons.", "A mood check-in with weekly patterns and private notes.", "A medication reminder with a simple taken-today log.", "A five-minute stretch routine with step-by-step cards.", "A sleep journal for bedtime, wake time, and how rested you feel."],
+  "Food & Cooking": ["A recipe box with favorites, tags, and a cooking mode.", "A meal planner that turns selected recipes into a grocery list.", "A leftover tracker showing what to eat next.", "A kitchen timer board for several dishes at once.", "A weekly lunch planner with quick, repeatable ideas."],
+  "Home & Family": ["A shared household chore board with recurring tasks.", "A home inventory with rooms, photos, and replacement notes.", "A family calendar for appointments, school, and activities.", "A pet care log for feeding, walks, and appointments.", "A home maintenance list with seasonal reminders."],
+  "Travel & Driving": ["A road-trip checklist with stops, fuel, and notes.", "A trip itinerary with day-by-day places and reservation details.", "A mileage log for drives with purpose and distance.", "A packing list that can be reused for every trip.", "A parking spot saver with location, floor, and photo."],
+  "Personal Records": ["A private contacts log for important details and dates.", "A warranty tracker with purchase date and expiry reminders.", "A personal document checklist with renewal dates.", "A keepsake journal for memorable moments and photos.", "A home measurements notebook for rooms and furniture."],
+  "Learning": ["A flashcard deck for a language with honest self-grading.", "A reading notes app with quotes and takeaways.", "A study session timer with a small progress history.", "A vocabulary builder with daily review cards.", "A course tracker with lessons, notes, and completion progress."],
+  "Utilities": ["A unit converter for the measurements you use most.", "A simple countdown board for important dates.", "A QR code bookmark list with labels and notes.", "A recurring date calculator for renewals and anniversaries.", "A personal link saver with tags and quick search."]
+};
+function showPage(name) {
+  if (!["home","ideas","everyday","settings"].includes(name)) name = "home";
+  document.querySelectorAll(".page").forEach((p) => p.hidden = p.dataset.page !== name);
+  if (name === "ideas" && !$("#ideaCards").children.length) renderInspiration();
+  if (name === "everyday" && !$("#everydayCategories").children.length) renderEveryday();
+  window.scrollTo({ top: 0, behavior: "smooth" });
+}
+function renderInspiration() {
+  $("#ideaCards").innerHTML = PROMPT_IDEAS.map((x) => `<article class="idea-card"><h3>${x[0]}</h3><p>${x[1]}</p><button type="button" data-idea="${escapeAttr(x[1])}">Use this idea →</button></article>`).join("");
+  $("#ideaCards").querySelectorAll("[data-idea]").forEach((b) => b.addEventListener("click", () => { el.idea.value = b.dataset.idea; showPage("home"); history.replaceState(null,"","#home"); el.idea.focus(); }));
+}
+function renderEveryday() {
+  $("#everydayCategories").innerHTML = Object.entries(EVERYDAY).map(([cat, items]) => `<details class="category"><summary>${cat}<span>⌄</span></summary><div class="category-items">${items.map((x) => `<button class="category-item" type="button" data-idea="${escapeAttr(x)}"><span>${x}</span><small>›</small></button>`).join("")}</div></details>`).join("");
+  $("#everydayCategories").querySelectorAll("[data-idea]").forEach((b) => b.addEventListener("click", () => openBrief(b.dataset.idea)));
+}
+function openBrief(text) {
+  const modal = document.createElement("div"); modal.className = "brief-overlay";
+  modal.innerHTML = `<div class="brief" role="dialog" aria-modal="true"><button class="brief-close" aria-label="Close">×</button><p class="eyebrow">App idea brief</p><h2>${text}</h2><p>Use this as a starting point, then add the details that matter to you. Specsmith can turn it into a full build prompt.</p><div><button class="btn btn-primary brief-copy">Copy brief</button><button class="btn btn-ghost brief-home">Use on Home</button></div></div>`;
+  document.body.appendChild(modal);
+  modal.querySelector(".brief-close").onclick = () => modal.remove();
+  modal.querySelector(".brief-copy").onclick = () => copyText(text, "Brief copied");
+  modal.querySelector(".brief-home").onclick = () => { modal.remove(); el.idea.value = text; history.replaceState(null,"","#home"); showPage("home"); el.idea.focus(); };
+}
+
 /* ── Wiring ─────────────────────────────────────────────── */
 
 function wire() {
@@ -1114,9 +1170,23 @@ function wire() {
     }
   });
 
-  $("#themeToggle").addEventListener("click", () => {
-    applyTheme(document.body.dataset.theme === "dark" ? "light" : "dark");
+  if (el.clearBtn) el.clearBtn.addEventListener("click", clearPrompt);
+  const menuToggle = $("#menuToggle");
+  const menu = $("#menu");
+  menuToggle.addEventListener("click", () => {
+    menu.hidden = !menu.hidden;
+    menuToggle.setAttribute("aria-expanded", String(!menu.hidden));
   });
+  document.querySelectorAll("[data-page-link]").forEach((link) => link.addEventListener("click", (event) => {
+    event.preventDefault();
+    showPage(link.dataset.pageLink);
+    menu.hidden = true;
+    menuToggle.setAttribute("aria-expanded", "false");
+  }));
+  const themeSelect = $("#themeSelect");
+  if (themeSelect) { themeSelect.value = document.body.dataset.theme; themeSelect.addEventListener("change", () => applyTheme(themeSelect.value)); }
+  window.addEventListener("hashchange", () => showPage(location.hash.slice(1) || "home"));
+  showPage(location.hash.slice(1) || "home");
 }
 
 /* ── Boot ───────────────────────────────────────────────── */
