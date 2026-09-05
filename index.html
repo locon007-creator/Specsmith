@@ -3,12 +3,12 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Specsmith — AI Prompt Creator</title>
-  <meta name="description" content="Specsmith is a premium AI prompt creator. Craft, optimize, and manage production-grade prompts with a live preview, quality coach, templates, and a private library.">
+  <title>Specsmith — App-build Prompt Generator</title>
+  <meta name="description" content="Specsmith turns a one-line app idea into a finished, copy-ready build prompt for AI app builders like Arena AI Agent Mode.">
   <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
   <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
-  <meta property="og:title" content="Specsmith — AI Prompt Creator">
-  <meta property="og:description" content="Craft, optimize, and manage production-grade AI prompts.">
+  <meta property="og:title" content="Specsmith — App-build Prompt Generator">
+  <meta property="og:description" content="Idea in. Copy-ready build prompt out.">
   <link rel="icon" href="favicon.svg" type="image/svg+xml">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -23,7 +23,7 @@
       </div>
       <div class="brand-text">
         <span class="brand-name">Specsmith</span>
-        <span class="brand-tag">AI Prompt Creator</span>
+        <span class="brand-tag">App-build prompt generator</span>
       </div>
     </div>
 
@@ -37,184 +37,76 @@
           <path d="M20.6 14.2A8.6 8.6 0 0 1 9.8 3.4a8.6 8.6 0 1 0 10.8 10.8z"/>
         </svg>
       </button>
-
-      <div class="menu" id="exportMenu">
-        <button id="exportBtn" class="btn btn-ghost" type="button" aria-haspopup="true" aria-expanded="false">
-          Export
-          <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M6 9.5l6 6 6-6"/></svg>
-        </button>
-        <div class="menu-panel" role="menu">
-          <button data-action="download-md" role="menuitem">Download current prompt (.md)</button>
-          <button data-action="download-txt" role="menuitem">Download current prompt (.txt)</button>
-          <div class="menu-sep"></div>
-          <button data-action="export-library" role="menuitem">Export library (.json)</button>
-          <button data-action="import-library" role="menuitem">Import library (.json)</button>
-        </div>
-        <input type="file" id="importFile" accept="application/json,.json" hidden>
-      </div>
-
-      <button id="copyTop" class="btn btn-primary" type="button">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-        Copy prompt
-      </button>
     </div>
   </header>
 
   <main class="layout">
 
-    <!-- ───────────────────────── Sidebar ───────────────────────── -->
-    <aside class="panel sidebar">
-      <button id="newPrompt" class="btn btn-primary wide" type="button">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
-        New prompt
+    <!-- ───────────────────────── Idea ───────────────────────── -->
+    <section class="panel idea-panel" aria-label="App idea">
+      <div class="idea-head">
+        <h1 class="idea-title">Describe your app idea</h1>
+        <p class="idea-sub">One line is enough — Specsmith interprets the rest and writes the build prompt.</p>
+      </div>
+
+      <textarea id="idea" class="idea-input" rows="6" autocomplete="off" spellcheck="false"
+        placeholder="e.g. a habit tracker with streaks, or an expense splitter for roommates"></textarea>
+
+      <div class="idea-chips" id="ideaChips" aria-label="Example ideas"></div>
+
+      <button id="generateBtn" class="btn btn-primary wide generate-btn" type="button">
+        <span class="gen-spark" aria-hidden="true">✦</span>
+        <span id="genLabel">Generate prompt</span>
       </button>
-
-      <label class="search">
-        <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
-        <input id="search" type="search" placeholder="Search library…" autocomplete="off" spellcheck="false">
-      </label>
-
-      <h2 class="side-title">Templates</h2>
-      <div id="templates" class="templates"></div>
-
-      <h2 class="side-title">Library <span id="libCount" class="count-pill">0</span></h2>
-      <div id="library" class="library"></div>
-      <p class="privacy-note">
-        <svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="10" width="14" height="10" rx="2.5"/><path d="M8 10V7a4 4 0 0 1 8 0v3"/></svg>
-        Everything stays in your browser.
+      <p class="hint">
+        <kbd class="hint-kbd">⌘</kbd>/<kbd class="hint-kbd">Ctrl</kbd> + <kbd class="hint-kbd">Enter</kbd> to generate.
+        No account, no questions — everything stays in your browser.
       </p>
-    </aside>
 
-    <!-- ───────────────────────── Builder ───────────────────────── -->
-    <section class="panel editor" aria-label="Prompt builder">
-      <div class="title-row">
-        <input id="f-name" class="title-input" type="text" placeholder="Untitled prompt" autocomplete="off" spellcheck="false" aria-label="Prompt name">
-        <span id="dirtyDot" class="dirty-dot" title="Unsaved changes" hidden></span>
+      <div class="history-head">
+        <h2 class="side-title">History <span id="historyCount" class="count-pill">0</span></h2>
       </div>
-
-      <div class="fields">
-
-        <div class="field">
-          <label for="f-role">Role <span class="opt">persona</span></label>
-          <input id="f-role" type="text" placeholder="e.g. a principal software engineer who reviews code for correctness and security" autocomplete="off">
-          <p class="hint">Who the model should be. Strong roles anchor tone, judgment, and vocabulary.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-context">Context <span class="opt">background</span></label>
-          <textarea id="f-context" rows="3" placeholder="What situation, audience, or background does the model need to know?"></textarea>
-          <p class="hint">The world the prompt lives in — audience, product, constraints of the situation.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-task">Task <span class="req">core</span></label>
-          <textarea id="f-task" rows="4" placeholder="Describe exactly what the model must do. One clear objective beats five vague ones."></textarea>
-          <p class="hint">The single most important field. Be explicit about the action and the outcome.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-steps">Steps <span class="opt">optional</span></label>
-          <textarea id="f-steps" rows="3" placeholder="One step per line&#10;The model will follow them in order"></textarea>
-          <p class="hint">A short procedure improves consistency on complex work.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-constraints">Constraints <span class="opt">guardrails</span></label>
-          <textarea id="f-constraints" rows="3" placeholder="One rule per line&#10;e.g. Never invent sources"></textarea>
-          <p class="hint">Hard rules: what to avoid, limits, must-haves.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-format">Output format</label>
-          <div class="format-row">
-            <textarea id="f-format" rows="2" placeholder="e.g. Markdown report with Summary, Findings, Next Steps"></textarea>
-          </div>
-          <div class="format-chips" id="formatChips">
-            <button type="button" data-format="Markdown document with clear headings and short paragraphs.">Markdown</button>
-            <button type="button" data-format="Valid JSON only — no prose outside the JSON object.">JSON</button>
-            <button type="button" data-format="A table with concise column headers.">Table</button>
-            <button type="button" data-format="A tight bullet list — no filler sentences.">Bullets</button>
-            <button type="button" data-format="Plain prose, 3 short paragraphs maximum.">Prose</button>
-          </div>
-        </div>
-
-        <div class="field">
-          <label for="f-tone">Tone &amp; style</label>
-          <div class="tone-chips" id="toneChips">
-            <button type="button" data-tone="Professional">Professional</button>
-            <button type="button" data-tone="Friendly">Friendly</button>
-            <button type="button" data-tone="Technical">Technical</button>
-            <button type="button" data-tone="Concise">Concise</button>
-            <button type="button" data-tone="Persuasive">Persuasive</button>
-            <button type="button" data-tone="Academic">Academic</button>
-          </div>
-          <input id="f-tone" type="text" placeholder="Or write your own — e.g. warm, witty, plain-spoken" autocomplete="off">
-        </div>
-
-        <div class="field">
-          <label for="f-examples">Examples <span class="opt">optional</span></label>
-          <textarea id="f-examples" rows="3" placeholder="Show one ideal input → output pair if you have one."></textarea>
-          <p class="hint">Even one example dramatically improves format adherence.</p>
-        </div>
-
-        <div class="field">
-          <label for="f-notes">Additional notes <span class="opt">optional</span></label>
-          <textarea id="f-notes" rows="2" placeholder="Anything else the model should keep in mind."></textarea>
-        </div>
-
-      </div>
-
-      <div class="editor-actions">
-        <button id="saveBtn" class="btn btn-primary" type="button">Save to library</button>
-        <button id="dupeBtn" class="btn btn-ghost" type="button">Duplicate</button>
-        <button id="deleteBtn" class="btn btn-danger-ghost" type="button">Delete</button>
-      </div>
+      <div id="history" class="history"></div>
     </section>
 
-    <!-- ───────────────────────── Preview ───────────────────────── -->
-    <section class="panel preview" aria-label="Live preview">
-      <div class="preview-head">
-        <div class="score-wrap" title="Prompt quality score">
-          <svg class="ring" viewBox="0 0 48 48" aria-hidden="true">
-            <circle class="ring-bg" cx="24" cy="24" r="20"/>
-            <circle class="ring-fg" id="ringFg" cx="24" cy="24" r="20"/>
-          </svg>
-          <div class="score-num" id="scoreNum">–</div>
-        </div>
-        <div class="score-meta">
-          <strong id="scoreWord">Quality</strong>
-          <span id="scoreBlurb">Fill the builder to see your score.</span>
+    <!-- ───────────────────────── Prompt ───────────────────────── -->
+    <section class="panel output-panel" aria-label="Build prompt">
+      <div class="output-head">
+        <div class="output-name-wrap">
+          <span id="outputBadge" class="output-badge" hidden></span>
+          <strong id="outputName">Build prompt</strong>
         </div>
         <div class="stats">
           <span class="stat"><b id="statChars">0</b> chars</span>
           <span class="stat"><b id="statWords">0</b> words</span>
-          <span class="stat"><b id="statTokens">~0</b> tokens</span>
         </div>
       </div>
 
-      <div class="tabs" role="tablist">
-        <button class="tab active" data-tab="preview" role="tab" aria-selected="true">Prompt</button>
-        <button class="tab" data-tab="tips" role="tab" aria-selected="false">Coach <span id="tipCount" class="count-pill">0</span></button>
-      </div>
-
-      <div id="tab-preview" class="tab-body" role="tabpanel">
+      <div class="output-body">
         <div id="emptyHero" class="empty-hero">
           <div class="empty-spark" aria-hidden="true">✦</div>
-          <h3>Start forging</h3>
-          <p>Pick a template from the sidebar, or fill in the builder — your prompt assembles here in real time.</p>
+          <h3>Idea in, prompt out</h3>
+          <p>Describe an app on the left — a habit tracker, a trip planner, a flashcard app — and your finished build prompt appears here, ready to copy.</p>
         </div>
         <pre id="output" hidden></pre>
       </div>
 
-      <div id="tab-tips" class="tab-body" role="tabpanel" hidden>
-        <ul id="tips" class="tips"></ul>
+      <div class="output-actions" id="outputActions" hidden>
+        <button id="copyBtn" class="btn btn-primary" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+          Copy prompt
+        </button>
+        <button id="downloadBtn" class="btn btn-ghost" type="button">
+          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
+          Download .md
+        </button>
       </div>
     </section>
+
   </main>
 
   <footer class="foot">
-    <span>Specsmith · crafted prompts stay on your device</span>
-    <span class="kbd-hint"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>S</kbd> save</span>
+    <span>Specsmith · idea → finished build prompt, on your device</span>
   </footer>
 
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>

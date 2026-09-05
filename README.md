@@ -1,17 +1,16 @@
 # Specsmith
 
-Premium AI Prompt Creator — modern, Apple-level web app for crafting, optimizing, and managing AI prompts.
+App-build prompt generator — turn a one-line app idea into a finished, copy-ready build prompt.
 
-Built for Arena AI Agent Mode and deployed on Vercel, using the simplest reliable architecture for each build.
+Describe an app in plain language and Specsmith interprets it into a complete, high-information prompt you can paste straight into an AI app builder such as Arena AI Agent Mode. No questionnaires, no prompt-writing advice — just *idea in, finished prompt out*.
 
-## Features
+## How it works
 
-- **Prompt builder** — role, context, task, steps, constraints, format, tone, examples & notes, assembled into a clean structured prompt in real time.
-- **Quality coach** — a 0–100 score with a live checklist of prompt-engineering best practices.
-- **Template gallery** — eight production-grade starting points (code review, blog writer, analyst, tutor, image brief, strategist, support, UX copy).
-- **Library** — save, search, duplicate, and delete prompts; everything persists locally in your browser (nothing leaves your device).
-- **Export anywhere** — copy to clipboard, download as `.md`/`.txt`, or export/import the whole library as JSON.
-- **Light & dark themes**, keyboard shortcuts (`⌘/Ctrl + S` to save), fully responsive.
+1. **Type an idea** — "a habit tracker with streaks" is enough.
+2. **Generate** — Specsmith interprets the idea into purpose, target user, core workflow, screens, navigation, features, logic, persistence, interaction behavior, and visual direction.
+3. **Copy / download** — paste the finished prompt into your AI app builder.
+
+Generated prompts default to premium, mobile-first multi-screen web apps (360–430 px portrait) with Apple-level polish, delivered as one self-contained `index.html` with inline HTML/CSS/JS and state-driven navigation — unless the idea calls for something else.
 
 ## Run locally
 
@@ -27,3 +26,7 @@ Open http://localhost:3000.
 ## Deploy
 
 Push to Vercel (framework preset: **Other**, output: root) — or host the folder on any static host.
+
+## Privacy
+
+Everything runs in your browser. Ideas, history, and generated prompts never leave your device.
