@@ -1,116 +1,49 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Specsmith — App-build Prompt Generator</title>
-  <meta name="description" content="Specsmith turns a one-line app idea into a finished, copy-ready build prompt for AI app builders like Arena AI Agent Mode.">
-  <meta name="theme-color" content="#f5f5f7" media="(prefers-color-scheme: light)">
-  <meta name="theme-color" content="#0b0b0f" media="(prefers-color-scheme: dark)">
-  <meta property="og:title" content="Specsmith — App-build Prompt Generator">
-  <meta property="og:description" content="Idea in. Copy-ready build prompt out.">
-  <link rel="icon" href="favicon.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="styles.css">
+  <meta name="description" content="Turn an app idea into a copy-ready build prompt.">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml"><link rel="stylesheet" href="styles.css">
 </head>
-<body data-theme="light">
-
+<body data-theme="dark">
   <header class="topbar">
-    <div class="brand">
-      <div class="brand-mark" aria-hidden="true">
-        <svg viewBox="0 0 24 24" width="18" height="18" fill="none">
-          <path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2z" fill="currentColor"/>
-        </svg>
-      </div>
-      <div class="brand-text">
-        <span class="brand-name">Specsmith</span>
-        <span class="brand-tag">App-build prompt generator</span>
-      </div>
-    </div>
-
-    <div class="topbar-actions">
-      <button id="themeToggle" class="btn btn-ghost icon-btn" type="button" aria-label="Toggle appearance" title="Toggle appearance">
-        <svg class="icon-sun" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
-          <circle cx="12" cy="12" r="4.2"/>
-          <path d="M12 2.5v2.2M12 19.3v2.2M2.5 12h2.2M19.3 12h2.2M5 5l1.6 1.6M17.4 17.4L19 19M19 5l-1.6 1.6M6.6 17.4L5 19"/>
-        </svg>
-        <svg class="icon-moon" viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M20.6 14.2A8.6 8.6 0 0 1 9.8 3.4a8.6 8.6 0 1 0 10.8 10.8z"/>
-        </svg>
-      </button>
-    </div>
+    <a class="brand" href="#home" data-page-link="home" aria-label="Specsmith home">
+      <div class="brand-mark" aria-hidden="true"><svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4L12 2z"/></svg></div>
+      <div class="brand-text"><span class="brand-name">Specsmith</span><span class="brand-tag">App-build prompt generator</span></div>
+    </a>
+    <button id="menuToggle" class="menu-button" type="button" aria-label="Open menu" aria-expanded="false"><i></i><i></i><i></i></button>
   </header>
 
-  <main class="layout">
+  <div id="menu" class="menu-popover" hidden>
+    <div class="menu-label">Explore Specsmith</div>
+    <a href="#ideas" data-page-link="ideas"><span class="menu-icon">✦</span>Prompt Ideas <span>›</span></a>
+    <a href="#everyday" data-page-link="everyday"><span class="menu-icon">▦</span>Everyday App Prompts <span>›</span></a>
+    <a href="#settings" data-page-link="settings"><span class="menu-icon">◌</span>Settings <span>›</span></a>
+  </div>
 
-    <!-- ───────────────────────── Idea ───────────────────────── -->
-    <section class="panel idea-panel" aria-label="App idea">
-      <div class="idea-head">
-        <h1 class="idea-title">Describe your app idea</h1>
-        <p class="idea-sub">One line is enough — Specsmith interprets the rest and writes the build prompt.</p>
-      </div>
-
-      <textarea id="idea" class="idea-input" rows="6" autocomplete="off" spellcheck="false"
-        placeholder="e.g. a habit tracker with streaks, or an expense splitter for roommates"></textarea>
-
-      <div class="idea-chips" id="ideaChips" aria-label="Example ideas"></div>
-
-      <button id="generateBtn" class="btn btn-primary wide generate-btn" type="button">
-        <span class="gen-spark" aria-hidden="true">✦</span>
-        <span id="genLabel">Generate prompt</span>
-      </button>
-      <p class="hint">
-        <kbd class="hint-kbd">⌘</kbd>/<kbd class="hint-kbd">Ctrl</kbd> + <kbd class="hint-kbd">Enter</kbd> to generate.
-        No account, no questions — everything stays in your browser.
-      </p>
-
-      <div class="history-head">
-        <h2 class="side-title">History <span id="historyCount" class="count-pill">0</span></h2>
-      </div>
-      <div id="history" class="history"></div>
+  <main>
+    <section id="page-home" class="page page-home" data-page="home">
+      <div class="home-intro"><p class="eyebrow">Turn an idea into a build plan</p><h1>What are you building?</h1><p>Describe your app idea in as much detail as you like. Specsmith will shape it into a polished, ready-to-use prompt.</p></div>
+      <section class="idea-panel panel" aria-label="App idea">
+        <label class="input-label" for="idea">Describe your app idea</label>
+        <textarea id="idea" class="idea-input" rows="9" autocomplete="off" spellcheck="true" placeholder="Tell us what you want to build…&#10;&#10;Include who it’s for, what it should do, or how it should feel."></textarea>
+        <button id="generateBtn" class="btn btn-primary wide generate-btn" type="button"><span class="gen-spark">✦</span><span id="genLabel">Generate prompt</span></button>
+        <p class="hint"><kbd>⌘</kbd>/<kbd>Ctrl</kbd> + <kbd>Enter</kbd> to generate · stays in your browser</p>
+        <details class="history-details"><summary><span>History</span><span id="historyCount" class="count-pill">0</span><span class="summary-chevron">⌄</span></summary><div id="history" class="history"></div></details>
+      </section>
+      <section id="outputPanel" class="output-panel panel" aria-label="Generated build prompt" hidden>
+        <div class="output-head"><div class="output-name-wrap"><span id="outputBadge" class="output-badge">✦</span><strong id="outputName">Build prompt</strong></div><div class="stats"><span class="stat"><b id="statChars">0</b> chars</span><span class="stat"><b id="statWords">0</b> words</span></div></div>
+        <pre id="output"></pre>
+        <div class="output-actions" id="outputActions"><button id="copyBtn" class="btn btn-primary" type="button">⧉ Copy prompt</button><button id="downloadBtn" class="btn btn-ghost" type="button">↓ Download</button><button id="clearBtn" class="btn btn-ghost" type="button">× Clear</button></div>
+      </section>
     </section>
 
-    <!-- ───────────────────────── Prompt ───────────────────────── -->
-    <section class="panel output-panel" aria-label="Build prompt">
-      <div class="output-head">
-        <div class="output-name-wrap">
-          <span id="outputBadge" class="output-badge" hidden></span>
-          <strong id="outputName">Build prompt</strong>
-        </div>
-        <div class="stats">
-          <span class="stat"><b id="statChars">0</b> chars</span>
-          <span class="stat"><b id="statWords">0</b> words</span>
-        </div>
-      </div>
-
-      <div class="output-body">
-        <div id="emptyHero" class="empty-hero">
-          <div class="empty-spark" aria-hidden="true">✦</div>
-          <h3>Idea in, prompt out</h3>
-          <p>Describe an app on the left — a habit tracker, a trip planner, a flashcard app — and your finished build prompt appears here, ready to copy.</p>
-        </div>
-        <pre id="output" hidden></pre>
-      </div>
-
-      <div class="output-actions" id="outputActions" hidden>
-        <button id="copyBtn" class="btn btn-primary" type="button">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="12" height="12" rx="3"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy prompt
-        </button>
-        <button id="downloadBtn" class="btn btn-ghost" type="button">
-          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v12M7 10l5 5 5-5M4 21h16"/></svg>
-          Download .md
-        </button>
-      </div>
-    </section>
-
+    <section id="page-ideas" class="page subpage" data-page="ideas" hidden><div class="page-heading"><p class="eyebrow">Start somewhere</p><h1>Prompt Ideas</h1><p>Quick sparks for useful little apps. Pick one to bring it home.</p></div><div id="ideaCards" class="idea-cards"></div></section>
+    <section id="page-everyday" class="page subpage" data-page="everyday" hidden><div class="page-heading"><p class="eyebrow">Small apps, real life</p><h1>Everyday App Prompts</h1><p>Short, practical starters you can turn into a full build prompt.</p></div><div id="everydayCategories" class="category-list"></div></section>
+    <section id="page-settings" class="page subpage" data-page="settings" hidden><div class="page-heading"><p class="eyebrow">Make it yours</p><h1>Settings</h1><p>Simple preferences for your Specsmith workspace.</p></div><div class="settings-list"><details open><summary>Appearance <span>⌄</span></summary><div class="setting-row"><div><strong>Theme</strong><small>Choose how Specsmith looks.</small></div><select id="themeSelect" aria-label="Theme"><option value="dark">Dark</option><option value="light">Light</option></select></div></details><details><summary>About Specsmith <span>⌄</span></summary><p class="setting-copy">Your ideas, prompts, and history stay on this device. More preferences are coming soon.</p></details></div></section>
   </main>
-
-  <footer class="foot">
-    <span>Specsmith · idea → finished build prompt, on your device</span>
-  </footer>
-
+  <footer class="foot">Specsmith · idea → finished build prompt, on your device</footer>
   <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
-
   <script src="app.js"></script>
-</body>
-</html>
+</body></html>
