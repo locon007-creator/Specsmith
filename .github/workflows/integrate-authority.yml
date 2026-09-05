@@ -1,0 +1,85 @@
+name: Integrate Prompt Authority
+on:
+  push:
+    branches:
+      - feature/global-prompt-authority
+permissions:
+  contents: write
+jobs:
+  integrate:
+    if: ${{ !contains(github.event.head_commit.message, '[authority-integrated]') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Patch app authority integration
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          path = Path('app.js')
+          source = path.read_text()
+
+          old_blocks = '''const INTERACTION = [
+            "Every tap responds instantly with 150–250 ms transitions — no dead clicks or jarring jumps.",
+            "Buttons scale on press; screens slide or fade in; success states spring briefly.",
+            "Confetti or a subtle celebration on meaningful milestones.",
+            "Empty, loading, and error states are designed, never blank.",
+          ];
+
+          const VISUAL =
+            "Premium Apple-level polish. System font stack, generous whitespace on an 8px grid, one accent color " +
+            "with a soft tint, hairline borders, frosted-glass surfaces, 14–20px rounded cards, soft shadows, and a " +
+            "light + dark theme. Content sits in a single centered column, max-width 430px and min-width 360px, " +
+            "portrait. No fake phone frame — the app itself is the frame.";
+          '''
+          new_blocks = '''const INTERACTION = [
+            "Every visible control responds immediately and performs its stated action.",
+            "Use purposeful restrained transitions for navigation and state changes; avoid decorative motion that slows the task.",
+            "Preserve user-entered and active state through normal navigation where the product requires it.",
+            "Design empty, loading, completed, saved, edited, disabled, and error states only where relevant.",
+          ];
+          '''
+          if old_blocks not in source:
+              raise SystemExit('Expected INTERACTION/VISUAL block not found')
+          source = source.replace(old_blocks, new_blocks, 1)
+
+          old_workflow = '  plan.workflow = profile.workflow;'
+          new_workflow = '  plan.workflow = SpecsmithPromptAuthority.extractExplicitWorkflow(idea) || profile.workflow;'
+          if old_workflow not in source:
+              raise SystemExit('Expected workflow assignment not found')
+          source = source.replace(old_workflow, new_workflow, 1)
+
+          pattern = re.compile(r'function renderPlan\(plan\) \{.*?\n\}\n\n// Entry point\.', re.S)
+          replacement = '''function renderPlan(plan) {
+            const role = SpecsmithPromptAuthority.resolveRole(plan.idea, plan);
+            return SpecsmithPromptAuthority.renderCanonicalPrompt(plan, {
+              role,
+              interactionRules: INTERACTION,
+              defaultBuildGuidance: BUILD,
+            });
+          }
+
+          // Entry point.'''
+          source, count = pattern.subn(replacement, source, count=1)
+          if count != 1:
+              raise SystemExit(f'Expected one renderPlan block, replaced {count}')
+
+          path.write_text(source)
+          PY
+      - name: Verify authority suite
+        run: node --test tests/*.test.cjs
+      - name: Commit integration
+        run: |
+          if git diff --quiet; then
+            echo "No integration changes required"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add app.js
+          git commit -m "feat: route SpecSmith through global prompt authority [authority-integrated]"
+          git push
