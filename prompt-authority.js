@@ -16,8 +16,13 @@
   }
 
   function extractExplicitWorkflow(idea) {
-    const match = String(idea || '').match(/(?:main workflow|primary workflow|main flow|workflow)\s*:\s*([^\n.]+)/i);
-    return match ? match[1].trim() : null;
+    const text = String(idea || '');
+    let match = text.match(/(?:main workflow|primary workflow|main flow|workflow)\s*:\s*([^\n.]+)/i);
+    if (match) return match[1].trim();
+    match = text.match(/(?:main workflow|primary workflow|main flow|workflow)\s*\r?\n\s*([^\n]+(?:→[^\n]+)+)/i);
+    if (match) return match[1].trim().replace(/[.\s]+$/, '');
+    match = text.match(/([^\n.]+(?:→[^\n.]+){2,})/);
+    return match ? match[1].trim().replace(/[.\s]+$/, '') : null;
   }
 
   function classifyScreens(screens) {
@@ -46,12 +51,8 @@
     const limited = clean.slice(0, MAX_LINES);
     const fallback = (fillers || []).filter(Boolean);
     let i = 0;
-    while (limited.length < MIN_LINES && i < fallback.length) {
-      limited.push(fallback[i++]);
-    }
-    while (limited.length < MIN_LINES) {
-      limited.push('- Keep this category specific to the current app idea and primary workflow.');
-    }
+    while (limited.length < MIN_LINES && i < fallback.length) limited.push(fallback[i++]);
+    while (limited.length < MIN_LINES) limited.push('- Keep this category specific to the current app idea and primary workflow.');
     return limited.slice(0, MAX_LINES);
   }
 
@@ -79,6 +80,159 @@
     lines.push('- Persistence: ' + plan.persistence + '.');
     lines.push('- Use one source of truth so shared saved data and calculations cannot disagree across screens.');
     return lines;
+  }
+
+  function cleanLine(line) {
+    return String(line || '').replace(/^\s*[-*•]+\s*/, '').replace(/\s+/g, ' ').trim();
+  }
+
+  function isDetailedIdea(idea) {
+    const text = String(idea || '');
+    const headingHits = (text.match(/(?:^|\n)\s*(?:product brief|target user|main workflow|primary workflow|home|day setup|create route|work mode|settings|persistence|fields|show|menu|search behavior|end of day)\s*:?[ \t]*(?:\n|$)/gi) || []).length;
+    return text.length >= 500 && (headingHits >= 2 || /→/.test(text));
+  }
+
+  function extractIdeaName(idea, fallbackName) {
+    const text = String(idea || '');
+    let m = text.match(/(?:build|create)\s+[“"']([^”"']{2,50})[”"']/i);
+    if (m) return cleanLine(m[1]);
+    m = text.match(/[“"']([^”"']{2,50})[”"']/);
+    if (m) return cleanLine(m[1]);
+    const first = text.split(/\r?\n/).map(cleanLine).find(Boolean);
+    if (first && first.length <= 60 && !/:$/.test(first) && !/^(role|product brief|idea lock|target user|main workflow)$/i.test(first)) return first;
+    return fallbackName || 'App';
+  }
+
+  function extractPurpose(idea) {
+    const text = String(idea || '');
+    let m = text.match(/(?:^|\n)\s*(?:its\s+)?purpose\s*(?:is|:)\s*([^\n.]+(?:\.[^\n.]*)?)/i);
+    if (m) return cleanLine(m[1]).replace(/[.\s]+$/, '');
+    m = text.match(/(?:product brief\s*:?[ \t]*\r?\n)([^\n]+)/i);
+    if (m && !/^its purpose/i.test(cleanLine(m[1]))) return cleanLine(m[1]).replace(/[.\s]+$/, '');
+    return null;
+  }
+
+  function extractTargetUser(idea) {
+    const text = String(idea || '');
+    let m = text.match(/(?:^|\n)\s*target user\s*:?[ \t]*\r?\n\s*([^\n]+)/i);
+    if (m) return cleanLine(m[1]).replace(/[.\s]+$/, '');
+    m = text.match(/(?:^|\n)\s*target user\s*:\s*([^\n]+)/i);
+    if (m) return cleanLine(m[1]).replace(/[.\s]+$/, '');
+    m = text.match(/\bfor\s+(one|a|an)\s+([^\n.]{3,90})/i);
+    return m ? cleanLine(m[1] + ' ' + m[2]).replace(/[.\s]+$/, '') : null;
+  }
+
+  const META_HEADINGS = new Set([
+    'product brief','idea lock','target user','main workflow','primary workflow','main flow','workflow','constraints','scope lock',
+    'search behavior','search memory','fields','show','menu','automatically','do not show','below the address','top-left','top-right',
+    'primary action','button','design & ux standard','interaction rules','implementation','verification','done when','core principle'
+  ]);
+
+  function looksLikeHeading(line) {
+    const s = cleanLine(line).replace(/:$/, '').trim();
+    if (!s || s.length > 42 || META_HEADINGS.has(s.toLowerCase())) return false;
+    if (/^(?:[-+]|\d+[.)])/.test(s)) return false;
+    if (/→|[.!?]$/.test(s)) return false;
+    const words = s.split(/\s+/);
+    if (words.length > 6) return false;
+    return words.every((w) => /^(?:[A-Z0-9&/+]|Drop$|Hook$|of$|and$|the$|My$|Day$)/.test(w) || /^[A-Z][A-Za-z0-9&/+-]*$/.test(w));
+  }
+
+  function deriveScreens(idea) {
+    const lines = String(idea || '').split(/\r?\n/);
+    const screens = [];
+    const seen = new Set();
+    for (let i = 0; i < lines.length; i++) {
+      const name = cleanLine(lines[i]).replace(/:$/, '');
+      if (!looksLikeHeading(lines[i])) continue;
+      const key = name.toLowerCase();
+      if (seen.has(key)) continue;
+      let detail = '';
+      for (let j = i + 1; j < Math.min(lines.length, i + 7); j++) {
+        const next = cleanLine(lines[j]);
+        if (!next) continue;
+        if (looksLikeHeading(lines[j])) break;
+        if (/^(show|fields|menu|collect only|primary action|button|do not show):?$/i.test(next)) continue;
+        detail = next.replace(/[.\s]+$/, '');
+        break;
+      }
+      seen.add(key);
+      screens.push([name, detail || 'the product-specific content and actions explicitly described for this view']);
+    }
+    return screens.slice(0, 12);
+  }
+
+  function deriveFeatureLines(idea) {
+    const lines = String(idea || '').split(/\r?\n/);
+    const out = [];
+    const seen = new Set();
+    for (const raw of lines) {
+      if (!/^\s*[-*•+]\s+/.test(raw)) continue;
+      const line = cleanLine(raw);
+      if (!line || line.length < 4 || line.length > 150) continue;
+      if (/^(preserve|keep the instruction|prefer simple|do not invent)/i.test(line)) continue;
+      const key = line.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); out.push(line); }
+      if (out.length >= 8) break;
+    }
+    return out;
+  }
+
+  function deriveLogicLines(idea) {
+    const text = String(idea || '').replace(/\r/g, '');
+    const candidates = text.split(/\n|(?<=[.!?])\s+/).map(cleanLine).filter(Boolean);
+    const out = [];
+    const seen = new Set();
+    for (const line of candidates) {
+      if (line.length < 12 || line.length > 220) continue;
+      if (!/\b(when|after|if|automatically|remember|persist|never|only|becomes?|record|save|update|enable|disable|carry|move|open|change)\b/i.test(line)) continue;
+      if (/^(preserve|keep the instruction|prefer simple|do not invent)/i.test(line)) continue;
+      const key = line.toLowerCase();
+      if (!seen.has(key)) { seen.add(key); out.push(line.replace(/[.\s]+$/, '')); }
+      if (out.length >= 8) break;
+    }
+    return out;
+  }
+
+  function derivePersistence(idea) {
+    const lines = String(idea || '').split(/\r?\n/).map(cleanLine).filter(Boolean);
+    const explicit = lines.find((line) => /\b(localStorage|persist|persistence|refresh|reopen|remember.*locally|saved.*locally)\b/i.test(line));
+    return explicit ? explicit.replace(/^persistence\s*:?\s*/i, '').replace(/[.\s]+$/, '') : 'Persist every explicitly required active and saved record locally so normal navigation, refresh, close, or reopen does not lose required state';
+  }
+
+  function compileIdeaPlan(idea, fallbackProfile) {
+    const text = String(idea || '').trim();
+    const profile = fallbackProfile || {};
+    if (!isDetailedIdea(text)) {
+      return {
+        idea: text.replace(/\s+/g, ' ').trim().replace(/[.\s]+$/, '') + (text ? '.' : ''),
+        profileId: profile.id || 'generic',
+        name: profile.name || extractIdeaName(text, null),
+        purpose: profile.purpose || 'realize the current idea as a focused single-purpose product',
+        user: profile.user || extractTargetUser(text) || 'the user described in the source idea',
+        workflow: extractExplicitWorkflow(text) || profile.workflow || 'open → complete the primary task → review the result',
+        screens: (profile.screens || []).map((s) => [s[0], s[1]]),
+        features: (profile.features || []).slice(),
+        logic: (profile.logic || []).slice(),
+        persistence: profile.persistence || derivePersistence(text),
+      };
+    }
+
+    const screens = deriveScreens(text);
+    const features = deriveFeatureLines(text);
+    const logic = deriveLogicLines(text);
+    return {
+      idea: text.replace(/\s+/g, ' ').trim().replace(/[.\s]+$/, '') + '.',
+      profileId: 'idea-first',
+      name: extractIdeaName(text, null),
+      purpose: extractPurpose(text) || 'realize the source idea exactly as described while keeping its primary job obvious and low-friction',
+      user: extractTargetUser(text) || 'the user explicitly described in the source idea',
+      workflow: extractExplicitWorkflow(text) || 'follow the explicit start-to-finish actions in the source idea in their stated order',
+      screens: screens.length ? screens : [['Primary workflow', 'the explicit workflow, information, and controls described in the source idea']],
+      features: features.length ? features : ['Implement every explicitly requested product feature from the source idea'],
+      logic: logic.length ? logic : ['Preserve every stated state transition, prerequisite, and automatic behavior from the source idea'],
+      persistence: derivePersistence(text),
+    };
   }
 
   function renderCanonicalPrompt(plan, options) {
@@ -193,5 +347,5 @@
     return L.join('\n').trim();
   }
 
-  return { resolveRole, extractExplicitWorkflow, classifyScreens, renderCanonicalPrompt, compactLines };
+  return { resolveRole, extractExplicitWorkflow, classifyScreens, renderCanonicalPrompt, compactLines, compileIdeaPlan, isDetailedIdea };
 });
